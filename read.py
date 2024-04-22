@@ -8,25 +8,47 @@ def main():
     df = getData(DATA_URL)
 
 
+def poolCombination(s):
+    """
+    Returns a pooled / flattened list from all combination lists
+
+    s: data series of combinations
+    """
+
+    # Convert series to list
+    listOfList = s.to_list()
+
+    # Obtained pooled / flattened list
+    flatList = [
+        val
+        for combiList in listOfList
+        for val in combiList
+    ]
+
+    return flatList
+
+
 def combiToInt(x):
     """
     Convert list of strings to list of int (used for combinations column)
+
+    x (list): List of combination
     """
 
     try: 
         return [int(i) if i == '0' else int(i.lstrip("0")) for i in x]
     except:
-        print(x)
-        # pass
         raise Exception(f"Unable to convert to int due to {x}, remove this data")
 
 
 def getData(DATA_URL):
     """
     Returns a dataframe of results
+
+    DATA_URL (str): page containing table
     """
 
-    # Parse HTML tables (set first row as header)
+    # Parse HTML tables from page (set first row as header)
     html_tables = pd.read_html(DATA_URL, header=0)
 
     # Get dataframe of results
