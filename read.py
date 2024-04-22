@@ -8,6 +8,24 @@ def main():
     df = getData(DATA_URL)
 
 
+def createUniformData(data, numCount):
+    """
+    Returns a data of uniformly distributed draws
+    
+    data(list): pooled dataset of draws
+    numCount(int): number of unique numbers in lottery type (e.g. 55 for 6/55 Grand Lotto)
+    """
+    valCount = round(len(data) / numCount) # Number of draws per number in a uniform
+
+    uniformData = []
+
+    for num in range(min(data), numCount + 1):
+        for _ in range(valCount):
+            uniformData.append(num)
+
+    return uniformData
+
+
 def poolCombination(s):
     """
     Returns a pooled / flattened list from all combination lists
