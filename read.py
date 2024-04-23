@@ -1,4 +1,5 @@
 import pandas as pd
+from matplotlib import pyplot as plt
  
 
 def main():
@@ -6,6 +7,21 @@ def main():
     DATA_URL = 'drawresults.htm'
 
     df = getData(DATA_URL)
+
+
+def createHist(data, numCount, typeTitle):
+    """
+    Plots histogram
+
+    data(list): pooled dataset of draws
+    numCount(int): number of unique numbers in lottery type (e.g. 55 for 6/55 Grand Lotto)
+    typeTitle(str): lotto type, used for title
+    """
+    plt.hist(data, bins=numCount, alpha=0.5)
+    plt.title(f'Number Distribution for {typeTitle}')
+    plt.xlabel('numbers')
+    plt.ylabel('count')
+    plt.show()
 
 
 def createUniformData(data, numCount):
