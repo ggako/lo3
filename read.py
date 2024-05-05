@@ -95,6 +95,13 @@ def getData(DATA_URL):
     df = df[~df['COMBINATIONS'].isin(invalidVals)] # Removing rows with invalid combination values
     df.loc[:,'COMBINATIONS'] = df['COMBINATIONS'].apply(lambda x: combiToInt(x)) # Convert combination string list to integer list
 
+    # Filter out data which type has fewer than 100 occurence (arbitrarily selected) - filtered due to "insufficient" data 
+    minLottoTypeOccurence = 100
+    counts = df['LOTTO GAME'].value_counts(ascending=False)
+    countsToRemove = counts[counts < minLottoTypeOccurence]
+    typeToRemove = countsToRemove.index.values.tolist()
+    df = df[~df['LOTTO GAME'].isin(typeToRemove)]
+
     return df
 
 
