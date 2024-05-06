@@ -1,5 +1,6 @@
 import pandas as pd
 from matplotlib import pyplot as plt
+import sqlite3
  
 
 def main():
@@ -7,6 +8,103 @@ def main():
     DATA_URL = 'drawresults.htm'
 
     df = getData(DATA_URL)
+
+    createDB(df)
+
+
+def createDB(df):
+    """
+    Creates SQL database of results
+
+    df: DataFrame of results
+    """
+
+    conn = sqlite3.connect('results.sqlite')
+    cur = conn.cursor()
+
+    # Set-up tables
+    cur.executescript('''
+    DROP TABLE IF EXISTS LottoType;   
+    DROP TABLE IF EXISTS DrawInfo; 
+    DROP TABLE IF EXISTS Combinations; 
+
+    CREATE TABLE LottoType (
+        id          INTEGER PRIMARY KEY,
+        lottotype   TEXT UNIQUE
+    );                   
+
+    CREATE TABLE DrawInfo (
+        id              INTEGER PRIMARY KEY,
+        ballcount       INTEGER,
+        type_id         INTEGER,    
+        draw_date       TEXT,
+        jackpot         REAL,
+        winnercount     INTEGER,
+        FOREIGN KEY(type_id) REFERENCES LottoType(id)   
+    );       
+
+    CREATE TABLE Combinations (
+        results_id  INTEGER,
+        n1          INTEGER,
+        n2          INTEGER,     
+        n3          INTEGER,     
+        n4          INTEGER,            
+        n5          INTEGER,
+        n6          INTEGER,    
+        FOREIGN KEY(results_id) REFERENCES DrawInfo(id)        
+    )
+    ''')
+
+    # Inserting data into database
+    for index, row in df.iterrows():
+        
+        ballcount = len(row['COMBINATIONS'])
+        draw_date = row['DRAW DATE'].strftime("%Y-%m-%d")
+        jackpot = row['JACKPOT (PHP)']
+        winnercount = row['WINNERS']
+
+        # Inserting lottery type
+        cur.execute('''INSERT OR IGNORE INTO LottoType (lottotype)
+            VALUES ( ? )''', ( row['LOTTO GAME'], ) )
+        cur.execute('SELECT id FROM LottoType WHERE lottotype = ? ', (row['LOTTO GAME'], ))
+        type_id = cur.fetchone()[0]
+
+        # Inserting DrawInfo table entry - type_id, draw date, jackpot, winnercount
+        cur.execute('''INSERT OR REPLACE INTO DrawInfo
+            (ballcount, draw_date, jackpot, winnercount, type_id) VALUES ( ?, ?, ?, ?, ? )''',
+            (ballcount, draw_date, jackpot, winnercount, type_id) )
+        cur.execute('SELECT id FROM DrawInfo WHERE type_id = ? AND draw_date = ? ', (type_id, draw_date))
+        results_id = cur.fetchone()[0]
+
+        # Reassignment for shorter name (for next step / inserting combinations)
+        n = row['COMBINATIONS']
+
+        # Inserting combinations
+        if ballcount == 6:
+            cur.execute('''INSERT OR REPLACE INTO Combinations
+                (results_id, n1, n2, n3, n4, n5, n6) VALUES ( ?, ?, ?, ?, ?, ?, ?)''',
+                (results_id, n[0], n[1], n[2], n[3], n[4], n[5]) )
+        elif ballcount == 5:
+            cur.execute('''INSERT OR REPLACE INTO Combinations
+                (results_id, n1, n2, n3, n4, n5) VALUES ( ?, ?, ?, ?, ?, ?)''',
+                (results_id, n[0], n[1], n[2], n[3], n[4]) )
+        elif ballcount == 4:
+            cur.execute('''INSERT OR REPLACE INTO Combinations
+                (results_id, n1, n2, n3, n4) VALUES ( ?, ?, ?, ?, ?)''',
+                (results_id, n[0], n[1], n[2], n[3]) )
+        elif ballcount == 3:
+            cur.execute('''INSERT OR REPLACE INTO Combinations
+                (results_id, n1, n2, n3) VALUES ( ?, ?, ?, ?)''',
+                (results_id, n[0], n[1], n[2]) )
+        elif ballcount == 2:
+            cur.execute('''INSERT OR REPLACE INTO Combinations
+                (results_id, n1, n2) VALUES ( ?, ?, ?)''',
+                (results_id, n[0], n[1]) )
+        else:
+            raise Exception("Ball count not within range 2-6")
+        
+    conn.commit()
+    cur.close()
 
 
 def createHist(data, numCount, typeTitle):
