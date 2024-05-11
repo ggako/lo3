@@ -1,11 +1,15 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+import pandas as pd
 
 
 def gen_ez_2dist(numSim, entries):
     """
-    Generates list of number of draws
+    Generates pandas dataframe of number of draws (labeled with number of entries/bets)
+
+    numSim(int): Number of simulated draw counts
+    entries(list of list): List containing bets
     """
 
     # Initialize list of number of draws
@@ -14,30 +18,39 @@ def gen_ez_2dist(numSim, entries):
     while len(nums) != numSim:
         nums.append(ez_2(entries))
 
-    return nums
+    # Create 'labels' list (list containing number of entries/bets)
+    labels = [len(entries)] * numSim
+
+    # Create results dataframe (Size: numSim x 2)
+    data = {'Draws': nums, 'Entry': labels}
+    df = pd.DataFrame(data)
+
+    return df
 
 
 def createDistHist(data):
     """
     Creates histogram of distribution of number of draws to win
+
+    data(DataFrame): Long form results containing draw counts
     """
-    # Creating histogram with density plot
-    sns.histplot(data, bins=50, kde=True, color='lightgreen', edgecolor='red')
-    
-    # Adding labels and title
-    plt.xlabel('Values')
-    plt.ylabel('Draws')
-    plt.title(f'Number of draws to win (N = {len(data)})')
+
+    sns.set_theme()
+
+    # Creating histogram
+    # sns.histplot(data=data, x="Draws", hue="Entry", element="step") # For single plot
+    g = sns.FacetGrid(data, col="Entry")
+    g.map(sns.histplot, "Draws")
     
     # Display the plot
     plt.show()
-
-    return np.mean(data)
 
 
 def ez_2(entries):
     """
     Returns number of draws to win 2D lotto
+
+    entries (list of list): List of list of entry / bets
     """
 
     # Create numpy array of entries
@@ -54,7 +67,7 @@ def ez_2(entries):
     numbers = np.zeros(2, dtype=int)
 
     # Run draws
-    while np.array_equal(entries, numbers) == False: 
+    while np.all((entries == numbers), 1).any() == False: # For multiple entries
 
         # Generate numbers
         numbers = rng.choice(availableNumbers, size=2, replace=False)
