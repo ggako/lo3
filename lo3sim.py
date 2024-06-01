@@ -39,9 +39,20 @@ def createDistHist(data):
 
     # Creating histogram
     # sns.histplot(data=data, x="Draws", hue="Entry", element="step") # For single plot
-    g = sns.FacetGrid(data, col="Entry")
+    g = sns.FacetGrid(data, col='Entry')
     g.map(sns.histplot, "Draws")
-    
+
+    # Add vertical lines for mean draws
+    # Source: https://stackoverflow.com/questions/44960170/plotting-mean-lines-for-different-hue-data-on-a-seaborn-facetgrid-plot
+    def vertical_mean_line_survived(x, **kwargs):
+        plt.axvline(x.mean(), linestyle ='--', 
+                    color = 'k')
+        txkw = dict(size=10, color = 'k', rotation=90)
+        tx = "mean: {:.2f}".format(x.mean())
+        plt.text(x.mean()+100, 100, tx, **txkw)
+
+    g.map(vertical_mean_line_survived, 'Draws') 
+
     # Display the plot
     plt.show()
 
